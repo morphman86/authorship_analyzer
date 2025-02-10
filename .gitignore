@@ -1,2 +1,73 @@
-/plan/
-/__pycache__/
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment
+venv/
+.env/
+.envrc
+*.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore Jupyter Notebook checkpoints
+notebooks/.ipynb_checkpoints/
+*.checkpoint
+
+# Ignore dataset files (potentially large or sensitive)
+data/raw/
+data/processed/
+data/embeddings/
+
+# Ignore model files (large and should be backed up separately)
+models/
+*.h5
+*.pth
+*.pkl
+*.tflite
+*.onnx
+*.joblib
+
+# Ignore logs and debug files
+logs/
+*.log
+debug.log
+
+# Ignore API credentials or sensitive config files
+config.yaml
+secrets.json
+*.key
+*.pem
+*.crt
+
+# Ignore temporary or system files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Ignore IDE/editor settings
+.vscode/
+.idea/
+*.iml
+
+# Ignore test outputs, coverage reports and planning documents
+test-results/
+coverage/
+htmlcov/
+plan/
+.nox/
+.tox/
+
+# Ignore standalone script outputs
+scripts/output/
+*.csv
+*.tsv
+*.json
+
+# Ignore Python packaging files
+build/
+dist/
+*.egg-info/
