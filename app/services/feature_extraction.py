@@ -1,7 +1,7 @@
 import re
 import numpy as np
 import nltk
-from nltk.tag import PerceptronTagger
+import warnings
 from nltk.tokenize import word_tokenize, sent_tokenize
 from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -11,10 +11,13 @@ nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 
 class FeatureExtractor:
-    def __init__(self):
+    def __init__(self, corpus=None):
         """Initialize feature extractor with TF-IDF vectorizer"""
         self.vectorizer = TfidfVectorizer(max_features=100)  # Adjust as needed
         self.vector_size = 110  # Fixed-size feature vector (10 lexical + syntactic + 100 TF-IDF)
+
+        if corpus:
+            self.vectorizer.fit(corpus)  # Fit on the provided corpus to avoid retraining on each text
 
     def preprocess_text(self, text):
         """Tokenize, lowercase, and remove punctuation"""
@@ -45,9 +48,8 @@ class FeatureExtractor:
         """Extract syntactic features: punctuation count, part-of-speech distribution"""
         punctuation_count = sum(1 for char in text if char in ".,;:?!")
         words = self.preprocess_text(text)
-        tagger = PerceptronTagger()
-        pos_tags = [tag for _, tag in tagger.tag(words)]
-        pos_counts = Counter(pos_tags)
+        pos_tags = nltk.pos_tag(words)  # Use nltk.pos_tag for POS tagging
+        pos_counts = Counter(tag for _, tag in pos_tags)
 
         # Normalize POS counts
         total_words = max(len(words), 1)  # Avoid division by zero
@@ -59,13 +61,21 @@ class FeatureExtractor:
         }
 
     def get_text_embedding(self, text):
+        """Generate TF-IDF embedding for the text"""
         # Check if the text is empty
         if not text.strip():  # .strip() to avoid issues with spaces
+            warnings.warn("Empty input text received. Returning zero vector.", UserWarning)
             return np.zeros((1, self.vectorizer.get_feature_names_out().shape[0]))  # Empty vector
         
-        # Proceed with the normal vectorization for non-empty text
-        vectorized_text = self.vectorizer.fit_transform([text]).toarray()
+        # Transform using the pre-fitted vectorizer
+        vectorized_text = self.vectorizer.transform([text]).toarray()
+        
+        # If the resulting vector has fewer features than expected, pad with zeros
+        if vectorized_text.shape[1] < 100:
+            vectorized_text = np.pad(vectorized_text, ((0, 0), (0, 100 - vectorized_text.shape[1])), mode='constant')
+        
         return vectorized_text
+
 
     def get_feature_vector(self, text):
         """Combine all extracted features into a single vector"""
@@ -73,18 +83,31 @@ class FeatureExtractor:
         syntactic_features = self.extract_syntactic_features(text)
         text_embedding = self.get_text_embedding(text)
 
-        feature_vector = [
-            lexical_features["avg_word_length"],
-            lexical_features["unique_word_ratio"],
-            lexical_features["avg_sentence_length"],
-            syntactic_features["punctuation_count"]
+        # Lexical features (3)
+        lexical_vector = [
+            lexical_features.get("avg_word_length", 0),
+            lexical_features.get("unique_word_ratio", 0),
+            lexical_features.get("avg_sentence_length", 0)
         ]
 
-        # Add normalized POS distribution
-        pos_vector = np.zeros(6)  # Select 6 common POS categories for consistency
-        pos_tags = ["NN", "VB", "JJ", "RB", "IN", "DT"]  # Nouns, Verbs, Adjectives, etc.
+        # Syntactic features (1 + 6 POS tags)
+        syntactic_vector = [
+            syntactic_features.get("punctuation_count", 0)
+        ]
+        
+        # Ensure the POS vector has 6 features, pad if necessary
+        pos_vector = np.zeros(6)
+        pos_tags = ["NN", "VB", "JJ", "RB", "IN", "DT"]
         for i, tag in enumerate(pos_tags):
             pos_vector[i] = syntactic_features["pos_distribution"].get(tag, 0)
+        
+        # Add POS features to syntactic vector
+        syntactic_vector.extend(pos_vector)
 
-        final_vector = np.concatenate([feature_vector, pos_vector, text_embedding])
+        # TF-IDF embedding (100)
+        embedding = text_embedding.flatten() if text_embedding.size > 0 else np.zeros(100)
+
+        # Concatenate all features
+        final_vector = np.concatenate([lexical_vector, syntactic_vector, embedding])
+
         return final_vector

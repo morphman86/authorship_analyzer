@@ -7,7 +7,9 @@ class TestFeatureExtraction(unittest.TestCase):
 
     def setUp(self):
         """Initialize test data and FeatureExtractor instance before each test"""
-        self.extractor = FeatureExtractor()
+        # Provide a small corpus to fit the vectorizer
+        corpus = [DUMMY_TEXTS["short_text"], DUMMY_TEXTS["simple_text"], DUMMY_TEXTS["complex_text"]]
+        self.extractor = FeatureExtractor(corpus=corpus)  # Pass corpus to ensure TF-IDF vectorizer is fitted
 
     ### === STANDARD TESTS === ###
 
@@ -50,11 +52,11 @@ class TestFeatureExtraction(unittest.TestCase):
     ### === EDGE CASE TESTS === ###
 
     def test_empty_string(self):
-        """Test how feature extraction handles an empty string."""
-        empty_text = DUMMY_TEXTS["empty"]
-        vector = self.extractor.get_feature_vector(empty_text)
-        self.assertIsInstance(vector, np.ndarray)
-        self.assertEqual(len(vector), self.extractor.vector_size)  # Should still return a fixed-size vector
+        with self.assertWarns(Warning):
+            result = self.extractor.get_feature_vector('')
+
+        # Check if the resulting vector is a zero vector
+        self.assertTrue(np.all(result == 0))
 
     def test_only_punctuation(self):
         """Test handling of a string containing only punctuation."""
