@@ -1,6 +1,7 @@
 import re
 import numpy as np
 import nltk
+from nltk.tag import PerceptronTagger
 from nltk.tokenize import word_tokenize, sent_tokenize
 from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -44,7 +45,8 @@ class FeatureExtractor:
         """Extract syntactic features: punctuation count, part-of-speech distribution"""
         punctuation_count = sum(1 for char in text if char in ".,;:?!")
         words = self.preprocess_text(text)
-        pos_tags = [tag for _, tag in nltk.pos_tag(words)]
+        tagger = PerceptronTagger()
+        pos_tags = [tag for _, tag in tagger.tag(words)]
         pos_counts = Counter(pos_tags)
 
         # Normalize POS counts
@@ -57,12 +59,13 @@ class FeatureExtractor:
         }
 
     def get_text_embedding(self, text):
-        """Generate a TF-IDF vector for text"""
+        # Check if the text is empty
+        if not text.strip():  # .strip() to avoid issues with spaces
+            return np.zeros((1, self.vectorizer.get_feature_names_out().shape[0]))  # Empty vector
+        
+        # Proceed with the normal vectorization for non-empty text
         vectorized_text = self.vectorizer.fit_transform([text]).toarray()
-        if vectorized_text.shape[1] < 100:  # Ensure fixed size
-            padding = np.zeros((1, 100 - vectorized_text.shape[1]))
-            vectorized_text = np.hstack((vectorized_text, padding))
-        return vectorized_text.flatten()
+        return vectorized_text
 
     def get_feature_vector(self, text):
         """Combine all extracted features into a single vector"""
