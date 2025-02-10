@@ -30,16 +30,37 @@ class ModelRepository:
         Returns:
             The loaded model.
         """
-        model_path = os.path.join(self.model_dir, f"{model_name}.pth")
+        model_path = os.path.join(self.model_dir, model_name)  # Directory of the model
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model {model_name} not found in {self.model_dir}")
 
-        model = model_class()  # Initialize the model class
-        model.load_state_dict(torch.load(model_path))
-        model.eval()  # Set the model to evaluation mode
-        print(f"Model {model_name} loaded from {model_path}")
-        return model
+        # If using a directory with a model configuration file, load the model using from_pretrained()
+        config_path = os.path.join(model_path, 'config.json')
+        if os.path.exists(config_path):
+            # print(f"Trying to load pretrained model from directory {model_path}")
+            model = model_class.from_pretrained(model_path)  # Load from pretrained directory
+        else:
+            # If there's no config.json, load weights manually
+            # print(f"Loading weights manually from {model_path}")
+            model = model_class.from_pretrained('bert-base-uncased')  # Initialize from pre-trained (default model)
+            
+            try:
+                # Log the model architecture
+                # print("Model Architecture:")
+                # print(model)  # This will print out the entire model architecture
 
+                # Load weights from the saved .pth file
+                model.load_state_dict(torch.load(model_path))  # Load weights from .pth file
+                print(f"Model weights loaded successfully from {model_path}")
+            except RuntimeError as e:
+                # Handle missing keys or other errors during the loading process
+                print("Error loading model weights:")
+                print(e)
+
+        model.eval()  # Set the model to evaluation mode
+        # print(f"Model {model_name} loaded from {model_path}")
+        return model
+    
     def save_embeddings(self, embeddings, embeddings_name):
         """
         Save precomputed embeddings to the directory.
@@ -49,7 +70,7 @@ class ModelRepository:
         """
         embeddings_path = os.path.join(self.model_dir, f"{embeddings_name}.pkl")
         torch.save(embeddings, embeddings_path)
-        print(f"Embeddings saved to {embeddings_path}")
+        # print(f"Embeddings saved to {embeddings_path}")
 
     def load_embeddings(self, embeddings_name):
         """

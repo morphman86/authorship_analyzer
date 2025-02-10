@@ -23,7 +23,7 @@ def generate_bert_embeddings(texts, model_name, max_length=512):
             inputs = tokenizer(text, padding='max_length', truncation=True, max_length=max_length, return_tensors='pt')
             inputs = {key: val.to(device) for key, val in inputs.items()}
             outputs = model(**inputs)
-            cls_embedding = outputs.last_hidden_state[:, 0, :].cpu().numpy()
+            cls_embedding = outputs.last_hidden_state[:, 0, :].cpu().numpy()  # Extract CLS token embedding
             embeddings.append(cls_embedding)
 
     return embeddings
@@ -36,8 +36,11 @@ def save_embeddings(embeddings, output_path):
 def main():
     print("Current Working Directory:", os.getcwd())
     config = Config()
+    print(f"Loading input data from {config.input_csv}")
     texts = load_text_data(config.input_csv, config.text_column)
+    print(f"Generating embeddings, model: {config.bert_model_name}, length: {config.max_seq_length}")
     embeddings = generate_bert_embeddings(texts, config.bert_model_name, config.max_seq_length)
+    print(f"Saving embeddings: file {config.output_embeddings_path}")
     save_embeddings(embeddings, config.output_embeddings_path)
     print(f"BERT embeddings saved to {config.output_embeddings_path}")
 

@@ -1,30 +1,31 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
+from transformers import BertModel
 
 class SiameseNetwork(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, model_name="bert-base-uncased", hidden_dim=128):
         super(SiameseNetwork, self).__init__()
-        # Define the layers for the sub-network (same for both inputs)
-        self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, 1)  # Output similarity score (0 or 1)
+        # Load pre-trained BERT model
+        self.bert = BertModel.from_pretrained(model_name)
+        self.bert_hidden_size = self.bert.config.hidden_size  # Typically 768 for BERT
 
-    def forward_once(self, x):
-        # Define the forward pass for one of the inputs
-        x = torch.relu(self.fc1(x))
+        # Fully connected layers for similarity scoring
+        self.fc1 = nn.Linear(self.bert_hidden_size, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        
+    def forward_once(self, input_ids, attention_mask):
+        # Extract embeddings from BERT
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        cls_embedding = outputs.last_hidden_state[:, 0, :]  # CLS token embedding
+
+        # Pass through the network
+        x = torch.relu(self.fc1(cls_embedding))
         x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
         return x
 
-    def forward(self, input1, input2):
-        # Pass both inputs through the network
-        output1 = self.forward_once(input1)
-        output2 = self.forward_once(input2)
-        # Calculate the absolute difference between the outputs
-        distance = torch.abs(output1 - output2)
-        similarity = torch.sigmoid(distance)
-        return distance, similarity
+    def forward(self, input1, input2, mask1, mask2):
+        # Process both inputs through BERT + Siamese layers
+        output1 = self.forward_once(input1, mask1)
+        output2 = self.forward_once(input2, mask2)
 
-# Initialize the model with the correct input_dim (768 for BERT embeddings)
-model = SiameseNetwork(input_dim=768, hidden_dim=128)  # Update input_dim to 768
+        return output1, output2

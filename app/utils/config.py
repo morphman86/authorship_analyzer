@@ -18,7 +18,9 @@ class Config:
 
         # BERT Model Settings
         self.bert_model_name = "bert-base-uncased"
+        self.checkpoint_model_name = "checkpoint_epoch_10.pth"
         self.bert_tokenizer_name = "bert-base-uncased"
+        self.bert_class_name = "bert-base-uncased-siamese"
 
         # Directory settings for raw and processed data
         self.raw_data_dir = "data/raw/"
@@ -28,8 +30,9 @@ class Config:
         # File paths for dataset and embeddings
         self.input_csv = f"{self.raw_data_dir}dataset.csv"
         self.text_column = "text"  # Change this if needed
-        self.output_embeddings_path = f"{self.embeddings_dir}bert_embeddings.pkl"
-        self.bert_embeddings_path = f"{self.embeddings_dir}bert_embeddings.pkl"
+        self.output_embeddings_path = f"{self.embeddings_dir}{self.bert_model_name}"
+        self.bert_embeddings_path = f"{self.embeddings_dir}{self.bert_model_name}"
+        self.trained_model_path = f"{self.model_save_path}{self.checkpoint_model_name}"
 
         # Model configuration (e.g., for Siamese Network)
         self.margin = 0.2  # Margin for the Siamese network loss function
