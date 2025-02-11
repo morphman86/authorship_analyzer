@@ -17,7 +17,7 @@ class Config:
         self.embedding_dim = 300   # Dimensionality of word embeddings (e.g., Word2Vec, GloVe)
 
         # BERT Model Settings
-        self.bert_model_name = "bert-base-uncased-siamese"
+        self.bert_model_name = "bert-base-uncased-siamese.npy"
         self.bert_base_model_name = "bert-base-uncased"
         self.checkpoint_model_name = "checkpoint_epoch_1.pth"
         self.bert_tokenizer_name = "bert-base-uncased"
@@ -39,6 +39,7 @@ class Config:
         self.margin = 0.2  # Margin for the Siamese network loss function
         self.l2_reg = 0.0001  # L2 regularization term
         self.threshold = 0.5  # Threshold for classification decision
+        self.device = "Cuda"
 
     def __repr__(self):
         return f"Config(learning_rate={self.learning_rate}, batch_size={self.batch_size}, " \
