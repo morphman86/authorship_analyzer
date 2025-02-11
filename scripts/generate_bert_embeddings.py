@@ -4,6 +4,7 @@ from transformers import BertTokenizer, BertModel
 import pandas as pd
 import pickle
 import os
+from tqdm import tqdm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.utils.config import Config
 
@@ -11,15 +12,16 @@ def load_text_data(file_path, text_column):
     df = pd.read_csv(file_path)
     return df[text_column].tolist()
 
-def generate_bert_embeddings(texts, model_name, max_length=512):
+def generate_bert_embeddings(texts, model_name, tokenizer_name, max_length=512):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokenizer = BertTokenizer.from_pretrained(model_name)
+    tokenizer = BertTokenizer.from_pretrained(tokenizer_name)
     model = BertModel.from_pretrained(model_name).to(device)
-
     embeddings = []
     model.eval()
+    
+    progress_bar = tqdm(texts, total=len(texts), leave=False)
     with torch.no_grad():
-        for text in texts:
+        for text in progress_bar:
             inputs = tokenizer(text, padding='max_length', truncation=True, max_length=max_length, return_tensors='pt')
             inputs = {key: val.to(device) for key, val in inputs.items()}
             outputs = model(**inputs)
@@ -39,7 +41,7 @@ def main():
     print(f"Loading input data from {config.input_csv}")
     texts = load_text_data(config.input_csv, config.text_column)
     print(f"Generating embeddings, model: {config.bert_model_name}, length: {config.max_seq_length}")
-    embeddings = generate_bert_embeddings(texts, config.bert_model_name, config.max_seq_length)
+    embeddings = generate_bert_embeddings(texts, config.bert_base_model_name, config.bert_tokenizer_name, config.max_seq_length)
     print(f"Saving embeddings: file {config.output_embeddings_path}")
     save_embeddings(embeddings, config.output_embeddings_path)
     print(f"BERT embeddings saved to {config.output_embeddings_path}")

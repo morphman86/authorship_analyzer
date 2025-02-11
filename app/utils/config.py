@@ -5,8 +5,8 @@ class Config:
         # Hyperparameters for model training
         self.learning_rate = 0.001
         self.batch_size = 32
-        self.epochs = 10
-        self.save_every = 2
+        self.epochs = 2
+        self.save_every = 1
 
         # Paths for saving and loading models
         self.model_save_path = "models/"
@@ -17,8 +17,9 @@ class Config:
         self.embedding_dim = 300   # Dimensionality of word embeddings (e.g., Word2Vec, GloVe)
 
         # BERT Model Settings
-        self.bert_model_name = "bert-base-uncased"
-        self.checkpoint_model_name = "checkpoint_epoch_10.pth"
+        self.bert_model_name = "bert-base-uncased-siamese"
+        self.bert_base_model_name = "bert-base-uncased"
+        self.checkpoint_model_name = "checkpoint_epoch_1.pth"
         self.bert_tokenizer_name = "bert-base-uncased"
         self.bert_class_name = "bert-base-uncased-siamese"
 
@@ -37,6 +38,7 @@ class Config:
         # Model configuration (e.g., for Siamese Network)
         self.margin = 0.2  # Margin for the Siamese network loss function
         self.l2_reg = 0.0001  # L2 regularization term
+        self.threshold = 0.5  # Threshold for classification decision
 
     def __repr__(self):
         return f"Config(learning_rate={self.learning_rate}, batch_size={self.batch_size}, " \
