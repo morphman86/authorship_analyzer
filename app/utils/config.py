@@ -39,7 +39,7 @@ class Config:
         self.margin = 0.2  # Margin for the Siamese network loss function
         self.l2_reg = 0.0001  # L2 regularization term
         self.threshold = 0.5  # Threshold for classification decision
-        self.device = "Cuda"
+        self.device = "cuda"
 
     def __repr__(self):
         return f"Config(learning_rate={self.learning_rate}, batch_size={self.batch_size}, " \
