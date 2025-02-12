@@ -74,7 +74,7 @@ def main():
     model_training = ModelTraining(model, config)
 
     print(f"Training model for {config.epochs} epochs...")
-    model_training.train(input_ids1, input_ids2, attention_mask1, attention_mask2, labels, epochs=config.epochs)
+    model_training.train(input_ids1, input_ids2, attention_mask1, attention_mask2, labels, epochs=config.epochs, patience=config.data_loss_patience)
     print("Training complete.")
 
 if __name__ == "__main__":
